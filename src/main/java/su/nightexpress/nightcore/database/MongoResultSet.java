@@ -107,6 +107,7 @@ public class MongoResultSet implements ResultSet {
         // The JDBC specification provides the order for each database metadata result set.
         // Because a lot BI tools will access database metadata columns by index, the specification order must be respected.
         this.cursor = cursor;
+        this.current = cursor.next();
     }
 
     // This is only used for testing, and that is why it has package level access, and the
@@ -291,7 +292,7 @@ public class MongoResultSet implements ResultSet {
         if (checkNull(o)) {
             return null;
         }
-        return o.toString();
+        return o.asString().getValue();
     }
 
     @Override

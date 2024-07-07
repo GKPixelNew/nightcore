@@ -27,9 +27,7 @@ import su.nightexpress.nightcore.database.sql.query.MongoUpdateQuery;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -123,20 +121,21 @@ public abstract class AbstractMongoDBDataHandler<P extends NightCorePlugin> exte
     public void insert(@NotNull String table, @NotNull List<SQLValue> values) {
         Document document = new Document();
         for (SQLValue value : values) {
-            document.append(value.getColumn().getName(), value.getValue());
+            document.append(value.getColumn().getName(), value.getConvertedValue());
         }
         database.getCollection(table).insertOne(document);
     }
 
     private Bson generateFilters(SQLCondition... conditions) {
+        if (conditions.length == 0) return new BsonDocument();
         List<Bson> filters = new ArrayList<>();
         for (SQLCondition condition : conditions) {
             filters.add(switch (condition.getType()) {
-                case EQUAL -> Filters.eq(condition.getValue().getColumn().getName(), condition.getValue().getValue());
+                case EQUAL -> Filters.eq(condition.getValue().getColumn().getName(), condition.getValue().getConvertedValue());
                 case NOT_EQUAL ->
-                        Filters.ne(condition.getValue().getColumn().getName(), condition.getValue().getValue());
-                case GREATER -> Filters.gt(condition.getValue().getColumn().getName(), condition.getValue().getValue());
-                case SMALLER -> Filters.lt(condition.getValue().getColumn().getName(), condition.getValue().getValue());
+                        Filters.ne(condition.getValue().getColumn().getName(), condition.getValue().getConvertedValue());
+                case GREATER -> Filters.gt(condition.getValue().getColumn().getName(), condition.getValue().getConvertedValue());
+                case SMALLER -> Filters.lt(condition.getValue().getColumn().getName(), condition.getValue().getConvertedValue());
             });
         }
         return Filters.and(filters);
@@ -145,33 +144,46 @@ public abstract class AbstractMongoDBDataHandler<P extends NightCorePlugin> exte
     public void update(@NotNull String table, @NotNull List<SQLValue> values, @NotNull SQLCondition... conditions) {
         List<Bson> updates = new ArrayList<>();
         for (SQLValue value : values) {
-            updates.add(Updates.set(value.getColumn().getName(), value.getValue()));
+            updates.add(Updates.set(value.getColumn().getName(), value.getConvertedValue()));
         }
         database.getCollection(table).updateMany(generateFilters(conditions), Updates.combine(updates));
     }
 
     @Override
-    public @NotNull IUpdateQuery updateQuery(@NotNull String table, @NotNull List<SQLValue> values, @NotNull List<SQLCondition> conditions) {
+    public @NotNull IUpdateQuery updateQuery(@NotNull String collection, @NotNull List<SQLValue> values, @NotNull List<SQLCondition> conditions) {
         List<Bson> updates = new ArrayList<>();
         for (SQLValue value : values) {
-            updates.add(Updates.set(value.getColumn().getName(), value.getValue()));
+            updates.add(Updates.set(value.getColumn().getName(), value.getConvertedValue()));
         }
-        return new MongoUpdateQuery(generateFilters(conditions.toArray(new SQLCondition[]{})), Updates.combine(updates));
+        return new MongoUpdateQuery(collection, generateFilters(conditions.toArray(new SQLCondition[]{})), Updates.combine(updates));
     }
 
     @Override
     public void executeUpdate(@NotNull IUpdateQuery query) {
-
+        var mongoQuery = (MongoUpdateQuery) query;
+        database.getCollection(mongoQuery.getCollection()).updateMany(mongoQuery.getFilter(), mongoQuery.getUpdate());
     }
 
     @Override
     public void executeUpdate(@NotNull String table, @NotNull List<SQLValue> values, @NotNull List<SQLCondition> conditions) {
-        executeUpdate(updateQuery(table, values, conditions));
+        update(table, values, conditions.toArray(new SQLCondition[0]));
     }
 
     @Override
     public void executeUpdates(@NotNull List<IUpdateQuery> queries) {
-
+        var mappedMongoQueries = new HashMap<String, List<MongoUpdateQuery>>();
+        for (var query : queries) {
+            var mongoQuery = (MongoUpdateQuery) query;
+            if (!mappedMongoQueries.containsKey(mongoQuery.getCollection())) {
+                mappedMongoQueries.put(mongoQuery.getCollection(), new ArrayList<>());
+            }
+            mappedMongoQueries.get(mongoQuery.getCollection()).add(mongoQuery);
+        }
+        for (var entry : mappedMongoQueries.entrySet()) {
+            var collection = entry.getKey();
+            var mongoQueries = entry.getValue().stream().map(MongoUpdateQuery::toUpdateManyModel).toList();
+            database.getCollection(collection).bulkWrite(mongoQueries);
+        }
     }
 
     public void delete(@NotNull String table, @NotNull SQLCondition... conditions) {
