@@ -32,12 +32,10 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.sql.*;
+import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Objects;
-import java.util.TimeZone;
+import java.util.*;
 
 public class MongoResultSet implements ResultSet {
     private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
@@ -107,7 +105,12 @@ public class MongoResultSet implements ResultSet {
         // The JDBC specification provides the order for each database metadata result set.
         // Because a lot BI tools will access database metadata columns by index, the specification order must be respected.
         this.cursor = cursor;
-        this.current = cursor.next();
+        try {
+            this.current = cursor.next();
+        } catch (NoSuchElementException e) {
+            this.current = null;
+            throw new SQLException("No current row in the result set.");
+        }
     }
 
     // This is only used for testing, and that is why it has package level access, and the

@@ -26,7 +26,6 @@ import static su.nightexpress.nightcore.database.AbstractDataHandler.getDataConf
 public abstract class AbstractSQLDataHandler<P extends NightCorePlugin> extends AbstractDelegatedDataHandler<P> {
     protected final DatabaseConfig config;
     protected final AbstractConnector connector;
-    protected Gson gson;
 
     public AbstractSQLDataHandler(@NotNull P plugin) {
         this(plugin, getDataConfig(plugin));
@@ -36,7 +35,6 @@ public abstract class AbstractSQLDataHandler<P extends NightCorePlugin> extends 
         super(plugin);
         this.config = config;
         this.connector = AbstractConnector.create(plugin, config);
-        this.gson = this.registerAdapters(new GsonBuilder().setPrettyPrinting()).create();
     }
 
     @Override
@@ -119,7 +117,7 @@ public abstract class AbstractSQLDataHandler<P extends NightCorePlugin> extends 
     }
 
     public void executeUpdates(@NotNull List<IUpdateQuery> queries) {
-        SQLQueries.executeUpdates(this.connector, (List<IUpdateQuery>) queries);
+        SQLQueries.executeUpdates(this.connector, queries);
     }
 
     public void delete(@NotNull String table, @NotNull SQLCondition... conditions) {

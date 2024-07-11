@@ -1,11 +1,8 @@
 package su.nightexpress.nightcore.database;
 
-import com.google.gson.GsonBuilder;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nightexpress.nightcore.NightCorePlugin;
-import su.nightexpress.nightcore.database.serialize.ItemStackSerializer;
 import su.nightexpress.nightcore.database.sql.SQLColumn;
 import su.nightexpress.nightcore.database.sql.SQLCondition;
 import su.nightexpress.nightcore.database.sql.SQLValue;
@@ -53,11 +50,6 @@ public abstract class AbstractDelegatedDataHandler<P extends NightCorePlugin> ex
 
     @Nullable
     public abstract AbstractConnector getConnector();
-
-    @NotNull
-    protected GsonBuilder registerAdapters(@NotNull GsonBuilder builder) {
-        return builder.registerTypeAdapter(ItemStack.class, new ItemStackSerializer());
-    }
 
     @Nullable
     protected abstract Connection getConnection() throws SQLException;
