@@ -1,5 +1,6 @@
 package su.nightexpress.nightcore.database;
 
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +22,7 @@ public abstract class AbstractDataHandler<P extends NightCorePlugin> extends Abs
     protected final AbstractDelegatedDataHandler<P> delegate;
     protected final DatabaseConfig config;
     protected final P plugin;
+    protected final Gson gson = new GsonBuilder().setPrettyPrinting().create(); // Used by other plugins
 
     public AbstractDataHandler(@NotNull P plugin) {
         this(plugin, getDataConfig(plugin));
