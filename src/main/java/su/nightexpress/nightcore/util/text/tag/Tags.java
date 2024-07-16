@@ -29,9 +29,16 @@ public class Tags {
     public static final FontStyleTag STRIKETHROUGH = new FontStyleTag("s", FontStyleTag.Style.STRIKETHROUGH);
     public static final FontStyleTag UNDERLINED    = new FontStyleTag("u", FontStyleTag.Style.UNDERLINED);
 
+    public static final FontStyleTag BOLD_FULL          = new FontStyleTag("bold", FontStyleTag.Style.BOLD);
+    public static final FontStyleTag ITALIC_FULL        = new FontStyleTag("italic", FontStyleTag.Style.ITALIC);
+    public static final FontStyleTag OBFUSCATED_FULL    = new FontStyleTag("obfuscated", FontStyleTag.Style.OBFUSCATED);
+    public static final FontStyleTag STRIKETHROUGH_FULL = new FontStyleTag("strikethrough", FontStyleTag.Style.STRIKETHROUGH);
+    public static final FontStyleTag UNDERLINED_FULL    = new FontStyleTag("underlined", FontStyleTag.Style.UNDERLINED);
+
     public static final ColorTag BLACK  = new ColorTag("black", "#000000");
     public static final ColorTag WHITE  = new ColorTag("white", "#ffffff");
     public static final ColorTag GRAY   = new ColorTag("gray", "#aaa8a8");
+    public static final ColorTag GREY   = new ColorTag("grey", "#aaa8a8");
     public static final ColorTag GREEN  = new ColorTag("green", "#74ea31");
     public static final ColorTag YELLOW = new ColorTag("yellow", "#ead931");
     public static final ColorTag ORANGE = new ColorTag("orange", "#ea9631");
@@ -42,6 +49,12 @@ public class Tags {
     public static final ColorTag PINK   = new ColorTag("pink", "#ea31b2");
 
     public static final ColorTag DARK_GRAY    = new ColorTag("dgray", new String[]{"dark_gray"}, "#6c6c62");
+    public static final ColorTag DARK_GREY    = new ColorTag("dgrey", new String[]{"dark_grey"}, "#6c6c62");
+    public static final ColorTag DARK_AQUA    = new ColorTag("dgrey", new String[]{"dark_aqua"}, "#00AAAA");
+    public static final ColorTag DARK_RED    = new ColorTag("dgrey", new String[]{"dark_red"}, "#AA0000");
+    public static final ColorTag DARK_PURPLE    = new ColorTag("dgrey", new String[]{"dark_purple"}, "#AA00AA");
+    public static final ColorTag DARK_BLUE    = new ColorTag("dgrey", new String[]{"dark_blue"}, "#0000AA");
+    public static final ColorTag DARK_GREEN    = new ColorTag("dgrey", new String[]{"dark_green"}, "#00AA00");
     public static final ColorTag LIGHT_GRAY   = new ColorTag("lgray", new String[]{"light_gray"}, "#d4d9d8");
     public static final ColorTag LIGHT_GREEN  = new ColorTag("lgreen", new String[]{"light_green"}, "#aefd5e");
     public static final ColorTag LIGHT_YELLOW = new ColorTag("lyellow", new String[]{"light_yellow"}, "#ffeea2");
@@ -55,11 +68,12 @@ public class Tags {
     static {
         registerTags(
             Tags.BLACK, Tags.WHITE, Tags.GRAY, Tags.GREEN,
-            Tags.YELLOW, Tags.ORANGE, Tags.RED,
+            Tags.YELLOW, Tags.ORANGE, Tags.RED, Tags.GREY,
             Tags.BLUE, Tags.CYAN, Tags.PURPLE, Tags.PINK,
 
-            Tags.DARK_GRAY, Tags.LIGHT_GRAY, Tags.LIGHT_GREEN,
-            Tags.LIGHT_YELLOW, Tags.LIGHT_ORANGE, Tags.LIGHT_RED,
+            Tags.DARK_GRAY, Tags.DARK_GREY, Tags.DARK_BLUE, Tags.DARK_PURPLE,
+            Tags.LIGHT_GRAY, Tags.LIGHT_GREEN, Tags.DARK_RED, Tags.DARK_AQUA,
+            Tags.LIGHT_YELLOW, Tags.LIGHT_ORANGE, Tags.LIGHT_RED, Tags.DARK_GREEN,
             Tags.LIGHT_BLUE, Tags.LIGHT_CYAN, Tags.LIGHT_PURPLE, Tags.LIGHT_PINK
         );
 
