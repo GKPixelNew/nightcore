@@ -78,6 +78,7 @@ public class Tags {
         );
 
         registerTags(Tags.BOLD, Tags.ITALIC, Tags.OBFUSCATED, Tags.STRIKETHROUGH, Tags.UNDERLINED);
+        registerTags(Tags.BOLD_FULL, Tags.ITALIC_FULL, Tags.OBFUSCATED_FULL, Tags.STRIKETHROUGH_FULL, Tags.UNDERLINED_FULL);
 
         registerTags(Tags.GRADIENT, Tags.LINE_BREAK, Tags.FONT, Tags.HOVER, Tags.CLICK,
             Tags.RESET, Tags.HEX_COLOR, Tags.HEX_COLOR_SHORT, Tags.TRANSLATE);
