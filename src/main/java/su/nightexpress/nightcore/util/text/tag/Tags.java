@@ -96,7 +96,6 @@ public class Tags {
     }
 
     public static void registerTag(@NotNull Tag tag) {
-        REGISTRY.put(tag.getName(), tag);
         for (String alias : tag.getAliases()) {
             REGISTRY.put(alias, tag);
         }
