@@ -2,6 +2,7 @@ package su.nightexpress.nightcore.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import su.nightexpress.nightcore.core.CoreLogger;
 
 import java.lang.reflect.*;
 import java.util.ArrayList;
@@ -11,20 +12,51 @@ import java.util.List;
 
 public class Reflex {
 
+    @Nullable
     public static Class<?> getClass(@NotNull String path, @NotNull String name) {
         return getClass(path + "." + name);
     }
 
+    @Nullable
     public static Class<?> getInnerClass(@NotNull String path, @NotNull String name) {
         return getClass(path + "$" + name);
     }
 
+    @Nullable
+    public static Class<?> getNMSClass(@NotNull String path, @NotNull String realName) {
+        return getNMSClass(path, realName, null);
+    }
+
+    @Nullable
+    public static Class<?> getNMSClass(@NotNull String path, @NotNull String realName, @Nullable String obfName) {
+        Class<?> byRealName = getClass(path + "." + realName, false);
+        if (byRealName != null) {
+            //CoreLogger.info("Class found by real name: " + path + "." + realName);
+            return byRealName;
+        }
+
+        if (obfName != null) {
+            Class<?> byObfName = getClass(path + "." + obfName, false);
+            if (byObfName != null) {
+                //CoreLogger.info("Class found by obfuscated name: " + path + "." + obfName);
+                return byObfName;
+            }
+        }
+
+        CoreLogger.warn("NMS class not found: " + path + "[" + realName + " / " + obfName + "]");
+        return null;
+    }
+
     private static Class<?> getClass(@NotNull String path) {
+        return getClass(path, true);
+    }
+
+    private static Class<?> getClass(@NotNull String path, boolean printError) {
         try {
             return Class.forName(path);
         }
         catch (ClassNotFoundException exception) {
-            exception.printStackTrace();
+            if (printError) exception.printStackTrace();
             return null;
         }
     }

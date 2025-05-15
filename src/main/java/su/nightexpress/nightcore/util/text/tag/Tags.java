@@ -2,14 +2,21 @@ package su.nightexpress.nightcore.util.text.tag;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import su.nightexpress.nightcore.NightCore;
+import su.nightexpress.nightcore.config.FileConfig;
 import su.nightexpress.nightcore.util.text.tag.api.Tag;
+import su.nightexpress.nightcore.util.text.tag.color.MinecraftColors;
 import su.nightexpress.nightcore.util.text.tag.impl.*;
 
+import java.awt.*;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Tags {
+
+    public static final String FILE_NAME = "colors.yml";
+    private static final String COLORS_PATH = "Colors";
 
     private static final Map<String, Tag> REGISTRY = new HashMap<>();
 
@@ -23,11 +30,17 @@ public class Tags {
     public static final ShortHexColorTag HEX_COLOR_SHORT = new ShortHexColorTag();
     public static final TranslationTag   TRANSLATE       = new TranslationTag();
 
-    public static final FontStyleTag BOLD          = new FontStyleTag("b", FontStyleTag.Style.BOLD);
-    public static final FontStyleTag ITALIC        = new FontStyleTag("i", FontStyleTag.Style.ITALIC);
-    public static final FontStyleTag OBFUSCATED    = new FontStyleTag("o", FontStyleTag.Style.OBFUSCATED);
-    public static final FontStyleTag STRIKETHROUGH = new FontStyleTag("s", FontStyleTag.Style.STRIKETHROUGH);
-    public static final FontStyleTag UNDERLINED    = new FontStyleTag("u", FontStyleTag.Style.UNDERLINED);
+    public static final FontStyleTag BOLD          = new FontStyleTag("b", new String[]{"bold"}, FontStyleTag.Style.BOLD, false);
+    public static final FontStyleTag ITALIC        = new FontStyleTag("i", new String[]{"em", "italic"}, FontStyleTag.Style.ITALIC, false);
+    public static final FontStyleTag OBFUSCATED    = new FontStyleTag("o", new String[]{"obfuscated", "obf"}, FontStyleTag.Style.OBFUSCATED, false);
+    public static final FontStyleTag STRIKETHROUGH = new FontStyleTag("s", new String[]{"strikethrough", "st"}, FontStyleTag.Style.STRIKETHROUGH, false);
+    public static final FontStyleTag UNDERLINED    = new FontStyleTag("u", new String[]{"underlined"}, FontStyleTag.Style.UNDERLINED, false);
+
+    public static final FontStyleTag UNBOLD          = BOLD.inverted();
+    public static final FontStyleTag UNITALIC        = ITALIC.inverted();
+    public static final FontStyleTag UNOBFUSCATED    = OBFUSCATED.inverted();
+    public static final FontStyleTag UNSTRIKETHROUGH = STRIKETHROUGH.inverted();
+    public static final FontStyleTag UNUNDERLINED    = UNDERLINED.inverted();
 
     public static final FontStyleTag BOLD_FULL          = new FontStyleTag("bold", FontStyleTag.Style.BOLD);
     public static final FontStyleTag ITALIC_FULL        = new FontStyleTag("italic", FontStyleTag.Style.ITALIC);
@@ -56,7 +69,7 @@ public class Tags {
     public static final ColorTag DARK_BLUE    = new ColorTag("dgrey", new String[]{"dark_blue"}, "#0000AA");
     public static final ColorTag DARK_GREEN    = new ColorTag("dgrey", new String[]{"dark_green"}, "#00AA00");
     public static final ColorTag LIGHT_GRAY   = new ColorTag("lgray", new String[]{"light_gray"}, "#d4d9d8");
-    public static final ColorTag LIGHT_GREEN  = new ColorTag("lgreen", new String[]{"light_green"}, "#aefd5e");
+    public static final ColorTag LIGHT_GREEN  = new ColorTag("lgreen", new String[]{"light_green"}, "#91f251");
     public static final ColorTag LIGHT_YELLOW = new ColorTag("lyellow", new String[]{"light_yellow"}, "#ffeea2");
     public static final ColorTag LIGHT_ORANGE = new ColorTag("lorange", new String[]{"light_orange"}, "#fdba5e");
     public static final ColorTag LIGHT_RED    = new ColorTag("lred", new String[]{"light_red"}, "#fd5e5e");
@@ -77,11 +90,46 @@ public class Tags {
             Tags.LIGHT_BLUE, Tags.LIGHT_CYAN, Tags.LIGHT_PURPLE, Tags.LIGHT_PINK
         );
 
-        registerTags(Tags.BOLD, Tags.ITALIC, Tags.OBFUSCATED, Tags.STRIKETHROUGH, Tags.UNDERLINED);
+        registerTags(
+            Tags.BOLD, Tags.ITALIC, Tags.OBFUSCATED, Tags.STRIKETHROUGH, Tags.UNDERLINED,
+            Tags.UNBOLD, Tags.UNITALIC, Tags.UNOBFUSCATED, Tags.UNSTRIKETHROUGH, Tags.UNUNDERLINED
+        );
         registerTags(Tags.BOLD_FULL, Tags.ITALIC_FULL, Tags.OBFUSCATED_FULL, Tags.STRIKETHROUGH_FULL, Tags.UNDERLINED_FULL);
 
         registerTags(Tags.GRADIENT, Tags.LINE_BREAK, Tags.FONT, Tags.HOVER, Tags.CLICK,
             Tags.RESET, Tags.HEX_COLOR, Tags.HEX_COLOR_SHORT, Tags.TRANSLATE);
+
+        registerTag(MinecraftColors.DARK_BLUE);
+        registerTag(MinecraftColors.DARK_GREEN);
+        registerTag(MinecraftColors.DARK_AQUA);
+        registerTag(MinecraftColors.DARK_RED);
+        registerTag(MinecraftColors.DARK_PURPLE);
+        registerTag(MinecraftColors.GOLD);
+        registerTag(MinecraftColors.AQUA);
+    }
+
+    public static void loadColorsFromFile(@NotNull NightCore core) {
+        FileConfig config = FileConfig.loadOrExtract(core, FILE_NAME);
+
+        if (config.getSection(COLORS_PATH).isEmpty()) {
+            getTags().forEach(tag -> {
+                if (!(tag instanceof ColorTag colorTag)) return;
+
+                for (String alias : colorTag.getAliases()) {
+                    config.set(COLORS_PATH + "." + alias, colorTag.getHex());
+                }
+            });
+        }
+
+        config.getSection(COLORS_PATH).forEach(name -> {
+            String hex = config.getString(COLORS_PATH + "." + name);
+            if (hex == null) return;
+
+            Color color = TagUtils.colorFromHexString(hex);
+            registerTag(new ColorTag(name, color));
+        });
+
+        config.saveChanges();
     }
 
     @NotNull

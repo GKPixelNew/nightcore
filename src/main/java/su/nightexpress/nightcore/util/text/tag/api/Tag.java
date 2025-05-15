@@ -1,15 +1,16 @@
 package su.nightexpress.nightcore.util.text.tag.api;
 
 import org.jetbrains.annotations.NotNull;
+import su.nightexpress.nightcore.util.text.tag.TagUtils;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class Tag {
 
-    public static final char OPEN_BRACKET  = '<';
-    public static final char CLOSE_BRACKET = '>';
-    public static final char CLOSE_SLASH   = '/';
+    @Deprecated public static final char OPEN_BRACKET  = '<';
+    @Deprecated public static final char CLOSE_BRACKET = '>';
+    @Deprecated public static final char CLOSE_SLASH   = '/';
 
     protected final String      name;
     protected final Set<String> aliases;
@@ -28,9 +29,21 @@ public class Tag {
         this.aliases.add(this.name);
     }
 
+    public boolean isCloseable() {
+        return true;
+    }
+
     @NotNull
+    @Deprecated
     public static String brackets(@NotNull String str) {
-        return OPEN_BRACKET + str + CLOSE_BRACKET;
+        return TagUtils.brackets(str);
+        //return OPEN_BRACKET + str + CLOSE_BRACKET;
+    }
+
+    @NotNull
+    @Deprecated
+    public static String closedBrackets(@NotNull String str) {
+        return TagUtils.closedBrackets(str);//brackets(CLOSE_SLASH + str);
     }
 
     /*@NotNull
@@ -38,6 +51,10 @@ public class Tag {
     public String enclose(@NotNull String text) {
         return this.getBracketsName() + text + this.getClosingName();
     }*/
+
+    public final boolean isNamed(@NotNull String name) {
+        return this.name.equalsIgnoreCase(name) || this.aliases.contains(name.toLowerCase());
+    }
 
     @NotNull
     @Deprecated
@@ -47,11 +64,7 @@ public class Tag {
 
     @NotNull
     public final String getClosingName() {
-        return brackets(CLOSE_SLASH + this.getName());
-    }
-
-    public final boolean isNamed(@NotNull String name) {
-        return this.name.equalsIgnoreCase(name) || this.aliases.contains(name.toLowerCase());
+        return closedBrackets(this.getName());
     }
 
     @NotNull

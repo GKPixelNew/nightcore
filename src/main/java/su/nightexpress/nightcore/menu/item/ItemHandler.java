@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
+@Deprecated
 public class ItemHandler {
 
     public static final String RETURN        = "return";
@@ -63,6 +64,7 @@ public class ItemHandler {
             (viewer, event) -> {
                 if (viewer.getPage() < viewer.getPages()) {
                     viewer.setPage(viewer.getPage() + 1);
+                    viewer.setUpdateTitle(true);
                     menu.open(viewer.getPlayer());
                 }
             },
@@ -75,6 +77,7 @@ public class ItemHandler {
             (viewer, event) -> {
                 if (viewer.getPage() > 1) {
                     viewer.setPage(viewer.getPage() - 1);
+                    viewer.setUpdateTitle(true);
                     menu.open(viewer.getPlayer());
                 }
             },

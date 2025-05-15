@@ -1,17 +1,27 @@
 package su.nightexpress.nightcore.core;
 
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.HoverEvent;
 import org.jetbrains.annotations.NotNull;
 import su.nightexpress.nightcore.dialog.Dialog;
-import su.nightexpress.nightcore.language.entry.LangItem;
-import su.nightexpress.nightcore.language.entry.LangString;
-import su.nightexpress.nightcore.language.entry.LangText;
+import su.nightexpress.nightcore.language.entry.*;
+import su.nightexpress.nightcore.ui.dialog.DialogManager;
+import su.nightexpress.nightcore.ui.menu.click.ClickKey;
+import su.nightexpress.nightcore.util.bridge.wrapper.ClickEventType;
+import su.nightexpress.nightcore.util.bridge.wrapper.HoverEventType;
 
 import static su.nightexpress.nightcore.util.Placeholders.*;
 import static su.nightexpress.nightcore.util.text.tag.Tags.*;
 
 public class CoreLang {
+
+    public static final LangEnum<ClickKey> CLICK_KEY = LangEnum.of("ClickKey", ClickKey.class, map -> {
+        map.put(ClickKey.LEFT, "L-Click");
+        map.put(ClickKey.RIGHT, "R-Click");
+        map.put(ClickKey.SHIFT_LEFT, "Shift + L-Click");
+        map.put(ClickKey.SHIFT_RIGHT, "Shift + R-Click");
+        map.put(ClickKey.DROP_KEY, "Drop [Q]");
+        map.put(ClickKey.SWAP_KEY, "Swap [F]");
+        map.put(ClickKey.DRAG_N_DROP, "Drag & Drop");
+    });
 
     public static final LangString COMMAND_ARGUMENT_FORMAT_REQUIRED = LangString.of("Command.Argument.Type.Required",
         LIGHT_RED.enclose("<" + GENERIC_NAME + ">"));
@@ -50,11 +60,10 @@ public class CoreLang {
         "  " + YELLOW.enclose("/" + COMMAND_LABEL) + " " + ORANGE.enclose(COMMAND_USAGE) + GRAY.enclose(" - " + COMMAND_DESCRIPTION)
     );
 
-    public static final LangString COMMAND_HELP_DESC = LangString.of("Command.Help.Desc", "Show help page.");
-
+    public static final LangString COMMAND_HELP_DESC      = LangString.of("Command.Help.Desc", "Show help page.");
     public static final LangString COMMAND_CHECKPERM_DESC = LangString.of("Command.CheckPerm.Desc", "Print player permission info.");
-
-    public static final LangString COMMAND_RELOAD_DESC = LangString.of("Command.Reload.Desc", "Reload the plugin.");
+    public static final LangString COMMAND_DUMPITEM_DESC  = LangString.of("Command.DumpItem.Desc", "Print item components info.");
+    public static final LangString COMMAND_RELOAD_DESC    = LangString.of("Command.Reload.Desc", "Reload the plugin.");
 
     public static final LangText COMMAND_RELOAD_DONE = LangText.of("Command.Reload.Done",
         LIGHT_GRAY.enclose("Plugin " + LIGHT_GREEN.enclose("reloaded") + "!"));
@@ -89,9 +98,11 @@ public class CoreLang {
     public static final LangText ERROR_INVALID_NUMBER = LangText.of("Error.Invalid_Number",
         RED.enclose("Invalid number!"));
 
+    @Deprecated
     public static final LangText ERROR_INVALID_MATERIAL = LangText.of("Error.InvalidMaterial",
         RED.enclose("Invalid material!"));
 
+    @Deprecated
     public static final LangText ERROR_INVALID_ENCHANTMENT = LangText.of("Error.InvalidEnchantment",
         RED.enclose("Invalid enchantment!"));
 
@@ -139,32 +150,79 @@ public class CoreLang {
         " "
     );
 
+    @Deprecated
     public static final LangText EDITOR_ACTION_EXIT = LangText.of("Editor.Action.Exit",
         TAG_NO_PREFIX,
         "",
         GRAY.enclose("Click " +
             CLICK.enclose(
-                HOVER.enclose(GREEN.enclose("[Here]"), HoverEvent.Action.SHOW_TEXT, GRAY.enclose("Click to cancel")),
-                ClickEvent.Action.RUN_COMMAND, "/" + Dialog.EXIT
+                HOVER.enclose(GREEN.enclose("[Here]"), HoverEventType.SHOW_TEXT, GRAY.enclose("Click to cancel")),
+                ClickEventType.RUN_COMMAND, "/" + Dialog.EXIT
             )
             + " to leave input mode."),
         "");
 
+    public static final LangString DIALOG_HEADER = LangString.of("Dialog.Header",
+        LIGHT_YELLOW.enclose(GENERIC_TIME));
+
+    public static final LangString DIALOG_DEFAULT_PROMPT = LangString.of("Dialog.DefaultPrompt",
+        LIGHT_GRAY.enclose("Enter " + LIGHT_GREEN.enclose("[Value]")));
+
+    public static final LangText DIALOG_INFO_EXIT = LangText.of("Dialog.Info.Exit",
+        TAG_NO_PREFIX,
+        "",
+        GRAY.enclose("Click " +
+            CLICK.wrapRunCommand(
+                HOVER.wrapShowText(GREEN.enclose("[Here]"), GRAY.enclose("Click to cancel.")),
+                "/" + DialogManager.EXIT
+            )
+            + " to leave input mode."),
+        "");
+
+    @Deprecated
     public static final LangString EDITOR_INPUT_HEADER_MAIN       = LangString.of("Editor.Input.Header.Main", GREEN.enclose(BOLD.enclose("Input Mode")));
+    @Deprecated
     public static final LangString EDITOR_INPUT_HEADER_ERROR      = LangString.of("Editor.Input.Header.Error", RED.enclose(BOLD.enclose("ERROR")));
+    @Deprecated
     public static final LangString EDITOR_INPUT_ERROR_NOT_INTEGER = LangString.of("Editor.Input.Error.NotInteger", GRAY.enclose("Expecting " + RED.enclose("whole") + " number!"));
+    @Deprecated
     public static final LangString EDITOR_INPUT_ERROR_GENERIC     = LangString.of("Editor.Input.Error.Generic", GRAY.enclose("Invalid value!"));
 
+
+    public static final LangString EDITOR_BUTTON_NAME = LangString.of("Editor.Button.Name",
+        LIGHT_YELLOW.enclose(BOLD.enclose(GENERIC_NAME))
+    );
+
+    public static final LangString EDITOR_BUTTON_DESCRIPTION = LangString.of("Editor.Button.Description",
+        GRAY.enclose(GENERIC_ENTRY)
+    );
+
+    public static final LangString EDITOR_BUTTON_CURRENT_DEFAULT_NAME = LangString.of("Editor.Button.Current.DefaultName",
+        "Current"
+    );
+
+    public static final LangString EDITOR_BUTTON_CURRENT_INFO = LangString.of("Editor.Button.Current.Info",
+        LIGHT_YELLOW.enclose("● " + LIGHT_GRAY.enclose(GENERIC_NAME + ": ") + GENERIC_VALUE)
+    );
+
+    public static final LangString EDITOR_BUTTON_CLICK_KEY = LangString.of("Editor.Button.ClickKey",
+        LIGHT_YELLOW.enclose("[▶]") + " " + LIGHT_GRAY.enclose(GENERIC_NAME + " to " + LIGHT_YELLOW.enclose(GENERIC_VALUE) + ".")
+    );
+
+
+    @Deprecated
     public static final LangItem EDITOR_ITEM_CLOSE         = LangItem.of("Editor.Generic.Close", LIGHT_RED.enclose(BOLD.enclose("Exit")));
+    @Deprecated
     public static final LangItem EDITOR_ITEM_RETURN        = LangItem.of("Editor.Generic.Return", LIGHT_GRAY.enclose(BOLD.enclose("Return")));
+    @Deprecated
     public static final LangItem EDITOR_ITEM_NEXT_PAGE     = LangItem.of("Editor.Generic.NextPage", LIGHT_GRAY.enclose("Next Page →"));
+    @Deprecated
     public static final LangItem EDITOR_ITEM_PREVIOUS_PAGE = LangItem.of("Editor.Generic.PreviousPage", LIGHT_GRAY.enclose("← Previous Page"));
 
-    public static final LangString NUMBER_SHORT_THOUSAND    = LangString.of("Number.Thousand", "k");
-    public static final LangString NUMBER_SHORT_MILLION     = LangString.of("Number.Million", "m");
-    public static final LangString NUMBER_SHORT_BILLION     = LangString.of("Number.Billion", "b");
-    public static final LangString NUMBER_SHORT_TRILLION    = LangString.of("Number.Trillion", "t");
-    public static final LangString NUMBER_SHORT_QUADRILLION = LangString.of("Number.Quadrillion", "q");
+    public static final LangUIButton EDITOR_ITEM_EXIT     = LangUIButton.builder("Editor.Item.Exit", LIGHT_RED.enclose(BOLD.enclose("Exit"))).build();
+    public static final LangUIButton EDITOR_ITEM_BACK     = LangUIButton.builder("Editor.Item.Return", LIGHT_GRAY.enclose(BOLD.enclose("Return"))).build();
+    public static final LangUIButton EDITOR_ITEM_NEXT     = LangUIButton.builder("Editor.Item.NextPage", LIGHT_GRAY.enclose(UNBOLD.enclose("Next Page →"))).build();
+    public static final LangUIButton EDITOR_ITEM_PREVIOUS = LangUIButton.builder("Editor.Item.PreviousPage", LIGHT_GRAY.enclose(UNBOLD.enclose("← Previous Page"))).build();
 
     @NotNull
     public static String getYesOrNo(boolean value) {

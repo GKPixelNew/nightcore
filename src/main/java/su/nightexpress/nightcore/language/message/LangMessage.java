@@ -1,24 +1,23 @@
 package su.nightexpress.nightcore.language.message;
 
 import me.clip.placeholderapi.PlaceholderAPI;
-import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nightexpress.nightcore.NightCorePlugin;
-import su.nightexpress.nightcore.core.CoreConfig;
 import su.nightexpress.nightcore.language.tag.MessageTag;
 import su.nightexpress.nightcore.language.tag.MessageTags;
 import su.nightexpress.nightcore.util.NumberUtil;
 import su.nightexpress.nightcore.util.Placeholders;
 import su.nightexpress.nightcore.util.Players;
 import su.nightexpress.nightcore.util.StringUtil;
+import su.nightexpress.nightcore.util.bukkit.NightSound;
+import su.nightexpress.nightcore.util.placeholder.Replacer;
 import su.nightexpress.nightcore.util.text.NightMessage;
 import su.nightexpress.nightcore.util.text.TextRoot;
+import su.nightexpress.nightcore.util.text.tag.TagUtils;
 import su.nightexpress.nightcore.util.text.tag.Tags;
-import su.nightexpress.nightcore.util.text.tag.api.Tag;
-import su.nightexpress.nightcore.util.wrapper.UniSound;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +29,8 @@ public class LangMessage {
     private final NightCorePlugin plugin;
     private final String          defaultText;
     private final MessageOptions  options;
-    private final TextRoot        message;
+
+    private TextRoot message;
 
     public LangMessage(@NotNull NightCorePlugin plugin, @NotNull String defaultText, @NotNull MessageOptions options) {
         this(plugin, defaultText, options, null);
@@ -40,12 +40,31 @@ public class LangMessage {
         this.plugin = plugin;
         this.defaultText = defaultText;
         this.options = options;
-        this.message = NightMessage.from(prefix == null || !options.hasPrefix() ? defaultText : prefix + defaultText);
-        if (CoreConfig.MODERN_TEXT_PRECOMPILE_LANG.get() && options.getOutputType() != OutputType.TITLES) {
-            this.message.compile();
-        }
+
+        this.setPrefix(prefix);
+//        this.message = NightMessage.from(prefix == null || !options.hasPrefix() ? defaultText : prefix + defaultText);
+//        if (CoreConfig.MODERN_TEXT_PRECOMPILE_LANG.get() && options.getOutputType() != OutputType.TITLES) {
+//            this.message.compile();
+//        }
     }
 
+    @NotNull
+    public LangMessage setPrefix(@NotNull NightCorePlugin plugin) {
+        return this.setPrefix(plugin.getPrefix());
+    }
+
+    @NotNull
+    public LangMessage setPrefix(@Nullable String prefix) {
+        boolean init = this.message == null;
+        this.message = NightMessage.from(prefix == null || !options.hasPrefix() ? defaultText : prefix + defaultText);
+
+        if (init && this.options.getOutputType() != OutputType.TITLES) {
+            this.message.compile();
+        }
+        return this;
+    }
+
+    @Deprecated
     private LangMessage(@NotNull LangMessage from) {
         this.plugin = from.plugin;
         this.defaultText = from.defaultText;
@@ -94,7 +113,7 @@ public class LangMessage {
                     }
                 }
                 else if (type.equalsIgnoreCase("sound")) {
-                    StringUtil.getEnum(typeContent, Sound.class).ifPresent(options::setSound);
+                    options.setSound(NightSound.deserialize(typeContent));
                 }
                 else if (type.equalsIgnoreCase("prefix")) {
                     boolean b = Boolean.parseBoolean(typeContent);
@@ -113,12 +132,12 @@ public class LangMessage {
             char letter = string.charAt(index);
 
             Tag:
-            if (letter == Tag.OPEN_BRACKET && index != (length - 1)) {
-                int indexEnd = TextRoot.indexOfIgnoreEscaped(string, Tag.CLOSE_BRACKET, index);
+            if (letter == TagUtils.OPEN_BRACKET && index != (length - 1)) {
+                int indexEnd = TextRoot.indexOfIgnoreEscaped(string, TagUtils.CLOSE_BRACKET, index);
                 if (indexEnd == -1) break Tag;
 
                 char next = string.charAt(index + 1);
-                if (next == Tag.CLOSE_BRACKET) break Tag;
+                if (next == TagUtils.CLOSE_BRACKET) break Tag;
 
                 String bracketsContent = string.substring(index + 1, indexEnd);
 
@@ -129,7 +148,7 @@ public class LangMessage {
                 int semicolonIndex = bracketsContent.indexOf(':');
                 if (semicolonIndex >= 0) {
                     tagName = bracketsContent.substring(0, semicolonIndex);
-                    tagContent = TextRoot.stripQuotesSlash(bracketsContent.substring(semicolonIndex + 1));
+                    tagContent = TagUtils.unquoted(bracketsContent.substring(semicolonIndex + 1));
                 }
 
                 MessageTag tag = MessageTags.getTag(tagName);
@@ -160,10 +179,10 @@ public class LangMessage {
         return new LangMessage(plugin, strippedText, options, prefix);
     }
 
-    @NotNull
-    public LangMessage setPrefix(@NotNull String prefix) {
-        return new LangMessage(this.plugin, this.defaultText, this.options, prefix);
-    }
+//    @NotNull
+//    public LangMessage setPrefix(@NotNull String prefix) {
+//        return new LangMessage(this.plugin, this.defaultText, this.options, prefix);
+//    }
 
     @NotNull
     public String getDefaultText() {
@@ -176,6 +195,12 @@ public class LangMessage {
     }
 
     @NotNull
+    public MessageOptions getOptions() {
+        return this.options;
+    }
+
+    @NotNull
+    @Deprecated
     public TextRoot getMessage(@NotNull CommandSender sender) {
         if (!this.options.usePlaceholderAPI() || !(sender instanceof Player player)) return this.getMessage();
 
@@ -183,11 +208,13 @@ public class LangMessage {
     }
 
     @NotNull
+    @Deprecated
     public LangMessage replace(@NotNull String var, @NotNull Object replacer) {
         return this.replace(str -> str.replace(var, String.valueOf(replacer)));
     }
 
     @NotNull
+    @Deprecated
     public LangMessage replace(@NotNull String var, @NotNull Consumer<List<String>> replacer) {
         List<String> list = new ArrayList<>();
         replacer.accept(list);
@@ -196,11 +223,13 @@ public class LangMessage {
     }
 
     @NotNull
+    @Deprecated
     public LangMessage replace(@NotNull String var, @NotNull List<String> replacer) {
         return this.replace(str -> str.replace(var, String.join(Placeholders.TAG_LINE_BREAK, replacer)));
     }
 
     @NotNull
+    @Deprecated
     public LangMessage replace(@NotNull UnaryOperator<String> replacer) {
         if (this.isDisabled()) return this;
 
@@ -215,35 +244,52 @@ public class LangMessage {
     }
 
     public void broadcast() {
+        this.broadcast(null);
+    }
+
+    public void broadcast(@Nullable Consumer<Replacer> consumer) {
         if (this.isDisabled()) return;
 
-        this.plugin.getServer().getOnlinePlayers().forEach(this::send);
-        this.send(this.plugin.getServer().getConsoleSender());
+        Players.getOnline().forEach(player -> this.send(player, consumer));
+        this.send(plugin.getServer().getConsoleSender(), consumer);
     }
 
     public void send(@NotNull CommandSender sender) {
+        this.send(sender, replacer -> {});
+    }
+
+    public void send(@NotNull CommandSender sender, @Nullable Consumer<Replacer> consumer) {
         if (this.isDisabled()) return;
 
         if (this.options.getSound() != null && sender instanceof Player player) {
-            UniSound.of(this.options.getSound()).play(player);
+            this.options.getSound().play(player);
         }
 
+        Replacer replacer = new Replacer();
+        if (consumer != null) consumer.accept(replacer);
+        if (this.options.usePlaceholderAPI() && sender instanceof Player player) {
+            replacer.replacePlaceholderAPI(player);
+        }
+
+        TextRoot message = replacer.apply(this.message);
+
         if (this.options.getOutputType() == OutputType.CHAT) {
-            this.getMessage(sender).send(sender);
+            message.send(sender);
             return;
         }
 
         if (sender instanceof Player player) {
             if (this.options.getOutputType() == OutputType.ACTION_BAR) {
-                Players.sendActionBar(player, this.getMessage(player));
+                Players.sendActionBar(player, message);
             }
             else if (this.options.getOutputType() == OutputType.TITLES) {
-                String[] split = Tags.LINE_BREAK.split(this.getMessage(sender).getString());
+                String[] split = Tags.LINE_BREAK.split(message.getString());
 
-                String title = NightMessage.asLegacy(split[0]);
-                String subtitle = split.length >= 2 ? NightMessage.asLegacy(split[1]) : "";
+                String title = split[0];//NightMessage.asLegacy(split[0]);
+                String subtitle = split.length >= 2 ? split[1]/*NightMessage.asLegacy(split[1])*/ : "";
 
-                player.sendTitle(title, subtitle, this.options.getTitleTimes()[0], this.options.getTitleTimes()[1], this.options.getTitleTimes()[2]);
+                //player.sendTitle(title, subtitle, this.options.getTitleTimes()[0], this.options.getTitleTimes()[1], this.options.getTitleTimes()[2]);
+                Players.sendTitle(player, title, subtitle, this.options.getTitleTimes()[0], this.options.getTitleTimes()[1], this.options.getTitleTimes()[2]);
             }
         }
     }

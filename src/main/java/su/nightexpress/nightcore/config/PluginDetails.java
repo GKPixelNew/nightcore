@@ -2,21 +2,22 @@ package su.nightexpress.nightcore.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import su.nightexpress.nightcore.NightCorePlugin;
 import su.nightexpress.nightcore.NightDataPlugin;
+import su.nightexpress.nightcore.NightPlugin;
 import su.nightexpress.nightcore.database.DatabaseConfig;
 import su.nightexpress.nightcore.language.LangManager;
 import su.nightexpress.nightcore.util.text.tag.Tags;
 
 import java.util.Locale;
 
-public class PluginDetails {
+public class PluginDetails implements Writeable {
 
     private final String   name;
     private final String   prefix;
     private final String[] commandAliases;
     private final String   language;
 
+    @Deprecated
     private DatabaseConfig databaseConfig;
 
     private Class<?> configClass;
@@ -44,9 +45,9 @@ public class PluginDetails {
     }
 
     @NotNull
-    public static PluginDetails read(@NotNull NightCorePlugin plugin) {
-        FileConfig config = plugin.getConfig();
-        PluginDetails defaults = plugin.getDetails();
+    public static PluginDetails read(@NotNull NightPlugin plugin, @NotNull FileConfig config, @NotNull PluginDetails defaults) {
+        //FileConfig config = plugin.getConfig();
+        //PluginDetails defaults = plugin.getDetails();
 
         String pluginName = ConfigValue.create("Plugin.Name", defaults.getName(),
             "Localized plugin name. It's used in messages and with internal placeholders.")
@@ -81,6 +82,14 @@ public class PluginDetails {
             .setPermissionsClass(defaults.getPermissionsClass());
     }
 
+    @Override
+    public void write(@NotNull FileConfig config, @NotNull String path) {
+        config.set(path + ".Plugin.Name", this.name);
+        config.set(path + ".Plugin.Prefix", this.prefix);
+        config.setStringArray(path + ".Plugin.Command_Aliases", this.commandAliases);
+        config.set(path + ".Plugin.Language", this.language);
+    }
+
     @NotNull
     public String getName() {
         return name;
@@ -102,11 +111,13 @@ public class PluginDetails {
     }
 
     @Nullable
+    @Deprecated
     public DatabaseConfig getDatabaseConfig() {
         return databaseConfig;
     }
 
     @NotNull
+    @Deprecated
     public PluginDetails setDatabaseConfig(@Nullable DatabaseConfig databaseConfig) {
         this.databaseConfig = databaseConfig;
         return this;

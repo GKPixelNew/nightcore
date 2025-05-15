@@ -1,7 +1,5 @@
 package su.nightexpress.nightcore.util;
 
-import org.bukkit.Bukkit;
-import org.bukkit.generator.WorldInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,8 +12,9 @@ import java.util.stream.Stream;
 public class Lists {
 
     @NotNull
+    @Deprecated
     public static List<String> worldNames() {
-        return Bukkit.getServer().getWorlds().stream().map(WorldInfo::getName).toList();
+        return BukkitThing.worldNames();
     }
 
     public static int indexOf(Object[] array, @NotNull Object objectToFind) {
@@ -107,6 +106,7 @@ public class Lists {
      * @return A list with no multiple empty lines in a row.
      */
     @NotNull
+    @Deprecated
     public static List<String> stripEmpty(@NotNull List<String> original) {
         List<String> stripped = new ArrayList<>();
 
@@ -126,16 +126,16 @@ public class Lists {
     public static List<String> getSequentialMatches(@NotNull List<String> results, @NotNull String input) {
         if (input.isBlank()) return results;
 
-        char[] chars = input.toCharArray();
+        char[] inputChars = input.toCharArray();
         List<String> goods = new ArrayList<>();
 
         Result:
-        for (String item : results) {
-            int itemLength = item.length();
+        for (String resultItem : results) {
+            int itemLength = resultItem.length();
             if (input.length() > itemLength) continue;
 
             int lastIndex = -1;
-            for (char letter : chars) {
+            for (char letter : inputChars) {
                 int nextIndex = lastIndex;
 
                 if (nextIndex < 0) {
@@ -145,14 +145,15 @@ public class Lists {
                     nextIndex++; // This fixes an issue, where method fails for similar characters in a row, like 'oo'.
                 }
 
-                int index = item.indexOf(letter, nextIndex);
+                letter = Character.toLowerCase(letter);
+                int index = resultItem.toLowerCase().indexOf(letter, nextIndex);
                 if (index <= lastIndex) {
                     continue Result;
                 }
 
                 lastIndex = index;
             }
-            goods.add(item);
+            goods.add(resultItem);
         }
         return goods;
     }

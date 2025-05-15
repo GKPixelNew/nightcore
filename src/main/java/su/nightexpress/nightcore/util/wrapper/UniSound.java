@@ -8,8 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nightexpress.nightcore.config.ConfigValue;
 import su.nightexpress.nightcore.config.FileConfig;
-import su.nightexpress.nightcore.util.StringUtil;
+import su.nightexpress.nightcore.util.BukkitThing;
 
+@Deprecated
 public class UniSound {
 
     private final String soundName;
@@ -18,7 +19,7 @@ public class UniSound {
     private final float pitch;
 
     public UniSound(@NotNull String soundName, @Nullable Sound soundType, float volume, float pitch) {
-        this.soundName = soundName;
+        this.soundName = soundName.toLowerCase();
         this.soundType = soundType;
         this.volume = volume;
         this.pitch = pitch;
@@ -36,7 +37,7 @@ public class UniSound {
 
     @NotNull
     public static UniSound of(@NotNull Sound sound, float volume, float pitch) {
-        return new UniSound(sound.name(), sound, volume, pitch);
+        return new UniSound(BukkitThing.toString(sound), sound, volume, pitch);
     }
 
     @NotNull
@@ -54,7 +55,7 @@ public class UniSound {
             "Sound speed. From 0.5 to 2.0"
         ).read(cfg).floatValue();
 
-        Sound soundType = StringUtil.getEnum(soundName, Sound.class).orElse(null);
+        Sound soundType = BukkitThing.getSound(soundName);//StringUtil.getEnum(soundName, Sound.class).orElse(null);
 
         return new UniSound(soundName, soundType, volume, pitch);
     }

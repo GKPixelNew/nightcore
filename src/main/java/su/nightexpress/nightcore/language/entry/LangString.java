@@ -6,7 +6,7 @@ import su.nightexpress.nightcore.config.FileConfig;
 import su.nightexpress.nightcore.util.text.NightMessage;
 import su.nightexpress.nightcore.util.text.TextRoot;
 
-public class LangString extends LangEntry<String> {
+public class LangString extends LangEntry {
 
     private String   string;
     private TextRoot message;
@@ -21,30 +21,25 @@ public class LangString extends LangEntry<String> {
     }
 
     @Override
-    public boolean write(@NotNull FileConfig config) {
-        if (!config.contains(this.getPath())) {
-            String textDefault = this.getDefaultText();
-            config.set(this.getPath(), textDefault);
-            return true;
-        }
-        return false;
+    public void write(@NotNull FileConfig config) {
+        config.set(this.path, this.defaultText);
     }
 
     @Override
-    @NotNull
-    public String load(@NotNull NightCorePlugin plugin) {
+    public void load(@NotNull NightCorePlugin plugin) {
         FileConfig config = plugin.getLang();
 
-        this.write(config);
-        String text = config.getString(this.getPath(), this.getPath());
-        this.setString(text);
+        if (!config.contains(this.path)) {
+            this.write(config);
+        }
 
-        return this.getString();
+        String text = config.getString(this.path, this.path);
+        this.setString(text);
     }
 
     @NotNull
     public String getString() {
-        return string;
+        return this.string;
     }
 
     public void setString(@NotNull String string) {
@@ -59,6 +54,6 @@ public class LangString extends LangEntry<String> {
 
     @NotNull
     public String getLegacy() {
-        return this.getMessage().toLegacy();
+        return this.message.toLegacy();
     }
 }

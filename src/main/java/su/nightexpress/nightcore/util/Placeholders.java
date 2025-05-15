@@ -1,11 +1,12 @@
 package su.nightexpress.nightcore.util;
 
+import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import su.nightexpress.nightcore.language.tag.MessageTags;
-import su.nightexpress.nightcore.util.placeholder.PlaceholderMap;
+import su.nightexpress.nightcore.util.placeholder.PlaceholderList;
 import su.nightexpress.nightcore.util.text.tag.Tags;
 
 import java.util.function.UnaryOperator;
@@ -13,10 +14,21 @@ import java.util.function.UnaryOperator;
 public class Placeholders {
 
     public static final String GITHUB_URL     = "https://github.com/nulli0n/nightcore-spigot";
-    public static final String WIKI_MAIN_URL     = GITHUB_URL + "/wiki/";
-    public static final String WIKI_ITEMS_URL    = WIKI_MAIN_URL + "ItemStack-Options";
-    public static final String WIKI_TEXT_URL     = WIKI_MAIN_URL + "Text-Formation";
-    public static final String WIKI_LANG_URL     = WIKI_MAIN_URL + "Language-Formation";
+
+    public static final String URL_WIKI        = "https://nightexpressdev.com/nightcore/";
+    public static final String URL_WIKI_ITEMS  = URL_WIKI + "configuration/item-formation/";
+    public static final String URL_WIKI_TEXT   = URL_WIKI + "configuration/text-formation/";
+    public static final String URL_WIKI_LANG   = URL_WIKI + "configuration/language/";
+    public static final String URL_WIKI_NUMBER = URL_WIKI + "configuration/number-formation/";
+
+    @Deprecated
+    public static final String WIKI_MAIN_URL     = URL_WIKI;
+    @Deprecated
+    public static final String WIKI_ITEMS_URL    = URL_WIKI_ITEMS;
+    @Deprecated
+    public static final String WIKI_TEXT_URL     = URL_WIKI_TEXT;
+    @Deprecated
+    public static final String WIKI_LANG_URL     = URL_WIKI_LANG;
 
     public static final String DEFAULT     = "default";
     public static final String NONE        = "none";
@@ -27,6 +39,7 @@ public class Placeholders {
     public static final String GENERIC_VALUE  = "%value%";
     public static final String GENERIC_AMOUNT = "%amount%";
     public static final String GENERIC_ENTRY =  "%entry%";
+    public static final String GENERIC_TIME = "%time%";
 
     public static final String TAG_NO_PREFIX  = MessageTags.NO_PREFIX.getBracketsName();
     public static final String TAG_LINE_BREAK = Tags.LINE_BREAK.getBracketsName();
@@ -47,35 +60,79 @@ public class Placeholders {
     public static final String SKIN_ARROW_RIGHT      = "f32ca66056b72863e98f7f32bd7d94c7a0d796af691c9ac3a9136331352288f9";
     public static final String SKIN_ARROW_DOWN       = "be9ae7a4be65fcbaee65181389a2f7d47e2e326db59ea3eb789a92c85ea46";
 
+    public static final String EMPTY_IF_ABOVE = "%empty-if-above%";
+    public static final String EMPTY_IF_BELOW = "%empty-if-below%";
+    public static final String EMPTY_IF_BOTH  = "%empty-if-both%";
+
     public static final String COMMAND_USAGE       = "%command_usage%";
     public static final String COMMAND_DESCRIPTION = "%command_description%";
     public static final String COMMAND_LABEL       = "%command_label%";
 
+    public static final PlaceholderList<Player> PLAYER = new PlaceholderList<Player>()
+        .add(PLAYER_NAME, Player::getName)
+        .add(PLAYER_DISPLAY_NAME, Player::getDisplayName);
+
+    public static final PlaceholderList<Location> LOCATION = new PlaceholderList<Location>()
+        .add(LOCATION_X, location -> String.valueOf(location.getBlockX()))
+        .add(LOCATION_Y, location -> String.valueOf(location.getBlockY()))
+        .add(LOCATION_Z, location -> String.valueOf(location.getBlockZ()))
+        .add(LOCATION_WORLD, LocationUtil::getWorldName)
+        ;
+
+    public static final PlaceholderList<CommandSender> SENDER = new PlaceholderList<CommandSender>()
+        .add(PLAYER_NAME, CommandSender::getName)
+        .add(PLAYER_DISPLAY_NAME, CommandSender::getName);
+
     @NotNull
     public static UnaryOperator<String> forLocation(@NotNull Location location) {
-        return new PlaceholderMap()
-            .add(LOCATION_X, () -> String.valueOf(location.getBlockX()))
-            .add(LOCATION_Y, () -> String.valueOf(location.getBlockY()))
-            .add(LOCATION_Z, () -> String.valueOf(location.getBlockZ()))
-            .add(LOCATION_WORLD, () -> LocationUtil.getWorldName(location))
-            .replacer();
+        return LOCATION.replacer(location);
+//
+//        return new PlaceholderMap()
+//            .add(LOCATION_X, () -> String.valueOf(location.getBlockX()))
+//            .add(LOCATION_Y, () -> String.valueOf(location.getBlockY()))
+//            .add(LOCATION_Z, () -> String.valueOf(location.getBlockZ()))
+//            .add(LOCATION_WORLD, () -> LocationUtil.getWorldName(location))
+//            .replacer();
     }
 
     @NotNull
     public static UnaryOperator<String> forPlayer(@NotNull Player player) {
-        return new PlaceholderMap()
-            .add(PLAYER_NAME, player::getName)
-            .add(PLAYER_DISPLAY_NAME, player::getDisplayName)
-            .replacer();
+        return PLAYER.replacer(player);
+//        return new PlaceholderMap()
+//            .add(PLAYER_NAME, player::getName)
+//            .add(PLAYER_DISPLAY_NAME, player::getDisplayName)
+//            .replacer();
+    }
+
+    @NotNull
+    public static UnaryOperator<String> forPlayerWithPAPI(@NotNull Player player) {
+        return str -> setPlaceholderAPI(forPlayer(player).apply(str), player);
     }
 
     @NotNull
     public static UnaryOperator<String> forSender(@NotNull CommandSender sender) {
         if (sender instanceof Player player) return forPlayer(player);
 
-        return new PlaceholderMap()
-            .add(PLAYER_NAME, sender::getName)
-            .add(PLAYER_DISPLAY_NAME, sender::getName)
-            .replacer();
+        return SENDER.replacer(sender);
+//
+//        return new PlaceholderMap()
+//            .add(PLAYER_NAME, sender::getName)
+//            .add(PLAYER_DISPLAY_NAME, sender::getName)
+//            .replacer();
+    }
+
+    @NotNull
+    public static UnaryOperator<String> forPlaceholderAPI(@NotNull Player player) {
+        return str -> {
+            if (Plugins.hasPlaceholderAPI()) {
+                return PlaceholderAPI.setPlaceholders(player, str);
+            }
+            return str;
+        };
+    }
+
+    @NotNull
+    public static String setPlaceholderAPI(@NotNull String str, @NotNull Player player) {
+        return forPlaceholderAPI(player).apply(str);
     }
 }

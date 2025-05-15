@@ -5,9 +5,9 @@ import org.jetbrains.annotations.NotNull;
 import su.nightexpress.nightcore.NightCorePlugin;
 import su.nightexpress.nightcore.config.FileConfig;
 import su.nightexpress.nightcore.util.ItemUtil;
-import su.nightexpress.nightcore.util.Pair;
 import su.nightexpress.nightcore.util.text.NightMessage;
 import su.nightexpress.nightcore.util.text.TextRoot;
+import su.nightexpress.nightcore.util.bukkit.NightItem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,14 +16,15 @@ import java.util.List;
 
 import static su.nightexpress.nightcore.util.text.tag.Tags.*;
 
-public class LangItem extends LangEntry<Pair<String, List<String>>> {
+@Deprecated
+public class LangItem extends LangEntry {
 
     private final List<String> defaultLore;
 
-    private String localizedName;
+    private String       localizedName;
     private List<String> localizedLore;
 
-    private TextRoot             wrappedName;
+    private TextRoot       wrappedName;
     private List<TextRoot> wrappedLore;
 
     public LangItem(@NotNull String key, @NotNull String defaultName, @NotNull List<String> defaultLore) {
@@ -37,48 +38,49 @@ public class LangItem extends LangEntry<Pair<String, List<String>>> {
     }
 
     @Override
-    public boolean write(@NotNull FileConfig config) {
-        if (!config.contains(this.getPath())) {
-            config.set(this.getPath() + ".Name", this.getDefaultName());
-            config.set(this.getPath() + ".Lore", this.getDefaultLore());
-            return true;
-        }
-        return false;
+    public void write(@NotNull FileConfig config) {
+        config.set(this.path + ".Name", this.defaultText);
+        config.set(this.path + ".Lore", this.defaultLore);
     }
 
     @Override
-    @NotNull
-    public Pair<String, List<String>> load(@NotNull NightCorePlugin plugin) {
+    public void load(@NotNull NightCorePlugin plugin) {
         FileConfig config = plugin.getLang();
 
-        this.write(config);
+        if (!config.contains(this.path)) {
+            this.write(config);
+        }
 
-        this.setLocalizedName(config.getString(this.getPath() + ".Name", this.getDefaultName()));
-        this.setLocalizedLore(config.getStringList(this.getPath() + ".Lore"));
-
-        return Pair.of(this.getLocalizedName(), this.getLocalizedLore());
+        this.setLocalizedName(config.getString(this.path + ".Name", this.defaultText));
+        this.setLocalizedLore(config.getStringList(this.path + ".Lore"));
     }
 
     public void apply(@NotNull ItemStack item) {
         ItemUtil.editMeta(item, meta -> {
-            meta.setDisplayName(this.getWrappedName().toLegacy());
-            meta.setLore(this.getWrappedLore().stream().map(TextRoot::toLegacy).toList());
+            meta.setDisplayName(this.wrappedName.toLegacy());
+            meta.setLore(this.wrappedLore.stream().map(TextRoot::toLegacy).toList());
         });
+    }
+
+    @Deprecated
+    public void apply(@NotNull NightItem item) {
+        item.setDisplayName(this.localizedName);
+        item.setLore(this.localizedLore);
     }
 
     @NotNull
     public String getDefaultName() {
-        return this.getDefaultText();
+        return this.defaultText;
     }
 
     @NotNull
     public List<String> getDefaultLore() {
-        return defaultLore;
+        return this.defaultLore;
     }
 
     @NotNull
     public String getLocalizedName() {
-        return localizedName;
+        return this.localizedName;
     }
 
     public void setLocalizedName(@NotNull String localizedName) {
@@ -88,7 +90,7 @@ public class LangItem extends LangEntry<Pair<String, List<String>>> {
 
     @NotNull
     public List<String> getLocalizedLore() {
-        return localizedLore;
+        return this.localizedLore;
     }
 
     public void setLocalizedLore(@NotNull List<String> localizedLore) {
@@ -99,12 +101,12 @@ public class LangItem extends LangEntry<Pair<String, List<String>>> {
 
     @NotNull
     public TextRoot getWrappedName() {
-        return wrappedName;
+        return this.wrappedName;
     }
 
     @NotNull
     public List<TextRoot> getWrappedLore() {
-        return wrappedLore;
+        return this.wrappedLore;
     }
 
     public static final String CLICK     = "Click";

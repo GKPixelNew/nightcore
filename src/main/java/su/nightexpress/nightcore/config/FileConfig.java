@@ -19,7 +19,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nightexpress.nightcore.NightCorePlugin;
 import su.nightexpress.nightcore.util.*;
+import su.nightexpress.nightcore.util.bukkit.NightSound;
 import su.nightexpress.nightcore.util.text.NightMessage;
+import su.nightexpress.nightcore.util.bukkit.NightItem;
 
 import java.io.File;
 import java.io.IOException;
@@ -150,7 +152,12 @@ public class FileConfig extends YamlConfiguration {
 
     @Override
     public void set(@NotNull String path, @Nullable Object value) {
-        if (value instanceof String str) {
+        if (value instanceof Writeable writeable) {
+            writeable.write(this, path);
+            this.changed = true;
+            return;
+        }
+        else if (value instanceof String str) {
             value = Colorizer.plain(str);
         }
         else if (value instanceof Collection<?> collection) {
@@ -206,6 +213,7 @@ public class FileConfig extends YamlConfiguration {
     public String getString(@NotNull String path) {
         String str = super.getString(path);
         return str == null || str.isEmpty() ? null : str;
+//        return super.getString(path);
     }
 
     @Override
@@ -222,6 +230,7 @@ public class FileConfig extends YamlConfiguration {
 
     @Override
     @Nullable
+    @Deprecated
     public Location getLocation(@NotNull String path) {
         String raw = this.getString(path);
         return raw == null ? null : LocationUtil.deserialize(raw);
@@ -242,6 +251,11 @@ public class FileConfig extends YamlConfiguration {
             return;
         }
         this.set(path, String.join(",", IntStream.of(arr).boxed().map(String::valueOf).toList()));
+    }
+
+    @NotNull
+    public String[] getStringArray(@NotNull String path) {
+        return this.getStringArray(path, new String[0]);
     }
 
     @NotNull
@@ -304,12 +318,36 @@ public class FileConfig extends YamlConfiguration {
     }*/
 
     @NotNull
+    public NightItem getCosmeticItem(@NotNull String path, @NotNull NightItem def) {
+        return this.contains(path) ? this.getCosmeticItem(path) : def;
+    }
+
+    @NotNull
+    public NightItem getCosmeticItem(@NotNull String path) {
+        return NightItem.read(this, path);
+    }
+
+    @NotNull
+    public NightSound getSound(@NotNull String path) {
+        if (this.contains(path + ".Name")) {
+            return NightSound.read(this, path); // Update
+        }
+        return NightSound.deserialize(this.getString(path, "null"));
+    }
+
+    public void setSound(@NotNull String path, @NotNull NightSound sound) {
+        this.set(path, sound.serialize());
+    }
+
+    @NotNull
+    @Deprecated
     public ItemStack getItem(@NotNull String path, @Nullable ItemStack def) {
         ItemStack item = this.getItem(path);
         return item.getType().isAir() && def != null ? def : item;
     }
 
     @NotNull
+    @Deprecated
     public ItemStack getItem(@NotNull String path) {
         if (!path.isEmpty() && !path.endsWith(".")) path = path + ".";
 
@@ -395,6 +433,7 @@ public class FileConfig extends YamlConfiguration {
         return item;
     }
 
+    @Deprecated
     public void setItem(@NotNull String path, @Nullable ItemStack item) {
         if (item == null) {
             this.set(path, null);
@@ -408,9 +447,6 @@ public class FileConfig extends YamlConfiguration {
         this.set(path + "Material", material.name());
         this.set(path + "Amount", item.getAmount() <= 1 ? null : item.getAmount());
         this.set(path + "SkinURL", ItemUtil.getHeadSkin(item));
-//        if (!this.contains(path + "SkinURL")) {
-//            this.set(path + "Head_Texture", ItemUtil.getSkullTexture(item));
-//        }
 
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;

@@ -7,9 +7,12 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nightexpress.nightcore.config.FileConfig;
+import su.nightexpress.nightcore.config.Writeable;
+import su.nightexpress.nightcore.util.BukkitThing;
 import su.nightexpress.nightcore.util.StringUtil;
+import su.nightexpress.nightcore.util.Version;
 
-public class UniParticle {
+public class UniParticle implements Writeable {
 
     private final Particle particle;
     private Object   data;
@@ -31,22 +34,27 @@ public class UniParticle {
 
     @NotNull
     public static UniParticle itemCrack(@NotNull ItemStack item) {
-        return new UniParticle(Particle.ITEM_CRACK, new ItemStack(item));
+        Particle var = Version.isBehind(Version.MC_1_21_3) ? Particle.valueOf("ITEM_CRACK") : BukkitThing.getParticle("item");
+        return new UniParticle(var, new ItemStack(item));
     }
 
     @NotNull
     public static UniParticle itemCrack(@NotNull Material material) {
-        return new UniParticle(Particle.ITEM_CRACK, new ItemStack(material));
+        Particle var = Version.isBehind(Version.MC_1_21_3) ? Particle.valueOf("ITEM_CRACK") : BukkitThing.getParticle("item");
+        return new UniParticle(var, new ItemStack(material));
     }
 
     @NotNull
     public static UniParticle blockCrack(@NotNull Material material) {
-        return new UniParticle(Particle.BLOCK_CRACK, material.createBlockData());
+        Particle var = Version.isBehind(Version.MC_1_21_3) ? Particle.valueOf("BLOCK_CRACK") : BukkitThing.getParticle("block");
+        return new UniParticle(var, material.createBlockData());
     }
 
     @NotNull
     public static UniParticle blockDust(@NotNull Material material) {
-        return new UniParticle(Particle.BLOCK_DUST, material.createBlockData());
+        return blockCrack(material);
+//        Particle var = Version.isAtLeast(Version.MC_1_21_3) ? Particle.valueOf("BLOCK_DUST") : BukkitThing.getParticle("dust");
+//        return new UniParticle(Particle.DUST, material.createBlockData());
     }
 
     @NotNull
@@ -61,7 +69,8 @@ public class UniParticle {
 
     @NotNull
     public static UniParticle redstone(@NotNull Color color, float size) {
-        return new UniParticle(Particle.REDSTONE, new Particle.DustOptions(color, size));
+        Particle var = Version.isBehindOrEqual(Version.V1_20_R3) ? Particle.valueOf("REDSTONE") : BukkitThing.getParticle("dust");
+        return new UniParticle(var, new Particle.DustOptions(color, size));
     }
 
     @NotNull
@@ -80,6 +89,9 @@ public class UniParticle {
             Color color = StringUtil.getColor(config.getString(path + ".Color", ""));
             double size = config.getDouble(path + ".Size", 1D);
             data = new Particle.DustOptions(color, (float) size);
+        }
+        else if (dataType == Color.class) {
+            data = StringUtil.getColor(config.getString(path + ".Color", ""));
         }
         else if (dataType == Particle.DustTransition.class) {
             Color colorStart = StringUtil.getColor(config.getString(path + ".Color_From", ""));
@@ -102,6 +114,7 @@ public class UniParticle {
         return UniParticle.of(particle, data);
     }
 
+    @Override
     public void write(@NotNull FileConfig config, @NotNull String path) {
         config.set(path + ".Name", this.isEmpty() ? "null" : this.getParticle().name());
 
@@ -120,6 +133,9 @@ public class UniParticle {
             Color color = dustOptions.getColor();
             config.set(path + ".Color", color.getRed() + "," + color.getGreen() + "," + color.getBlue());
             config.set(path + ".Size", dustOptions.getSize());
+        }
+        else if (data instanceof Color color) {
+            config.set(path + ".Color", color.getRed() + "," + color.getGreen() + "," + color.getBlue());
         }
         else if (data instanceof ItemStack item) {
             config.setItem(path + ".Item", item);
@@ -149,13 +165,16 @@ public class UniParticle {
         if (this.particle == null) return;
 
         Class<?> dataType = this.particle.getDataType();
-        if (this.data != null && this.data.getClass() == dataType) return;
+        if (this.data != null && dataType.isAssignableFrom(this.data.getClass())) return;
 
         if (dataType == BlockData.class) {
             this.data = Material.STONE.createBlockData();
         }
         else if (dataType == Particle.DustOptions.class) {
             this.data = new Particle.DustOptions(Color.WHITE, 1F);
+        }
+        else if (dataType == Color.class) {
+            this.data = Color.WHITE;
         }
         else if (dataType == Particle.DustTransition.class) {
             this.data = new Particle.DustTransition(Color.BLACK, Color.WHITE, 1F);

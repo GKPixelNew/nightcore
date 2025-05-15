@@ -1,14 +1,13 @@
 package su.nightexpress.nightcore.util.text;
 
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.chat.ComponentSerializer;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nightexpress.nightcore.core.CoreConfig;
 import su.nightexpress.nightcore.util.Colorizer;
+import su.nightexpress.nightcore.util.bridge.wrapper.NightComponent;
 import su.nightexpress.nightcore.util.text.tag.TagPool;
+import su.nightexpress.nightcore.util.text.tag.TagUtils;
 import su.nightexpress.nightcore.util.text.tag.Tags;
 import su.nightexpress.nightcore.util.text.tag.api.ContentTag;
 import su.nightexpress.nightcore.util.text.tag.api.PlaceholderTag;
@@ -27,12 +26,12 @@ public class TextRoot {
 
     private final TagPool tagPool;
 
-    private String string;
+    private String    string;
     private TextGroup rootGroup;
     private TextGroup currentGroup;
-    private TextNode currentNode;
+    private TextNode  currentNode;
 
-    private BaseComponent component;
+    private NightComponent component;
 
     public TextRoot(@NotNull String string, @NotNull TagPool tagPool) {
         this.tagPool = tagPool;
@@ -41,20 +40,9 @@ public class TextRoot {
 
     public void setString(@NotNull String string) {
         if (CoreConfig.LEGACY_COLOR_SUPPORT.get()) {
-            string = Colorizer.tagPlainHex(Colorizer.plain(string));
+            string = TagUtils.tagPlainHex(Colorizer.plain(string));
+            string = TagUtils.replaceLegacyColors(string);
         }
-
-        /*if (CoreConfig.LEGACY_COLOR_SUPPORT.get()) {
-            TimedMatcher timedMatcher = TimedMatcher.create(Colorizer.PATTERN_HEX_LEGACY, string);
-            Set<String> rawCodes = new HashSet<>();
-            while (timedMatcher.find()) {
-                String hex = timedMatcher.getMatcher().group(1);
-                rawCodes.add(hex);
-            }
-            for (String hex : rawCodes) {
-                string = string.replace(hex, Tag.brackets(hex));
-            }
-        }*/
 
         this.string = string;
         this.component = null;
@@ -85,24 +73,28 @@ public class TextRoot {
     public String toLegacy() {
         this.parseIfAbsent();
 
-        if (this.string.isBlank() || isEmpty(this.component)) return "";
+        //if (this.string.isBlank() || isEmpty(this.component)) return "";
+        if (this.string.isBlank() || this.component.isEmpty()) return "";
 
-        return TextComponent.toLegacyText(this.parseIfAbsent());
+        return this.component.toLegacy();
+        //return TextComponent.toLegacyText(this.parseIfAbsent());
     }
 
     @NotNull
     public String toJson() {
-        return ComponentSerializer.toString(this.parseIfAbsent());
+        return this.parseIfAbsent().toJson();
+        //return ComponentSerializer.toString(this.parseIfAbsent());
     }
 
     @NotNull
     @Deprecated
-    public BaseComponent toComponent() {
+    public NightComponent toComponent() {
         return this.parseIfAbsent();
         //return TextComponent.fromArray(this.parseIfAbsent());
     }
 
     @NotNull
+    @Deprecated
     public TextRoot replace(@NotNull String what, @NotNull Object object) {
         return this.replace(str -> str.replace(what, String.valueOf(object)));
     }
@@ -116,7 +108,8 @@ public class TextRoot {
     public void send(@NotNull CommandSender... senders) {
         this.parseIfAbsent();
         for (CommandSender sender : senders) {
-            sender.spigot().sendMessage(this.component);
+            this.component.send(sender);
+            //sender.spigot().sendMessage(this.component);
         }
     }
 
@@ -153,7 +146,7 @@ public class TextRoot {
         return this.currentNode;
     }
 
-    public BaseComponent parseIfAbsent() {
+    public NightComponent parseIfAbsent() {
         return this.component == null ? this.parse() : this.component;
     }
 
@@ -162,69 +155,11 @@ public class TextRoot {
     }
 
     @NotNull
-    public BaseComponent parse() {
+    public NightComponent parse() {
         this.rootGroup = new TextGroup(ROOT_NAME);
         this.currentGroup = this.rootGroup;
 
         this.doJob(Mode.PARSE, letter -> this.currentNode().append(letter));
-
-        /*int length = string.length();
-        for (int index = 0; index < length; index++) {
-            char letter = string.charAt(index);
-
-            Tag:
-            if (letter == Tag.OPEN_BRACKET && index != (length - 1)) {
-                int indexEnd = indexOfIgnoreEscaped(string, Tag.CLOSE_BRACKET, index);//string.indexOf(Tag.CLOSE_BRACKET, index);
-                //System.out.println("indexEnd = " + indexEnd);
-                if (indexEnd == -1) break Tag;
-
-                char next = string.charAt(index + 1);
-                if (next == Tag.CLOSE_BRACKET) break Tag;
-
-                boolean closeTag = false;
-                if (next == Tag.CLOSE_SLASH) {
-                    closeTag = true;
-                    index++;
-                }
-
-                String bracketsContent = string.substring(index + 1, indexEnd);
-                //System.out.println("bracketsContent = " + bracketsContent);
-
-                String tagName = bracketsContent;
-                String tagContent = null;
-
-                // Check for content tags
-                int semicolonIndex = bracketsContent.indexOf(':');
-                if (semicolonIndex >= 0) {
-                    tagName = bracketsContent.substring(0, semicolonIndex);
-                    tagContent = bracketsContent.substring(semicolonIndex + 1);
-                    //System.out.println("tagName = " + tagName);
-                    //System.out.println("tagContent = " + tagContent);
-                }
-                else if (tagName.startsWith(ShortHexColorTag.NAME)) {
-                    tagName = ShortHexColorTag.NAME;
-                    tagContent = bracketsContent;
-                }
-
-                Tag tag = Tags.getTag(tagName);
-                //System.out.println("found tag = " + tag);
-
-                if (tag != null) {
-                    if (tagPool.isGoodTag(tag)) {
-                        this.proceedTag(tag, closeTag, tagContent);
-                    }
-                    index = indexEnd;
-                    continue;
-                }
-
-                // Move cursor back to '/' of invalid closing tag.
-                if (closeTag) {
-                    index--;
-                }
-            }
-
-            this.currentNode().append(letter);
-        }*/
 
         this.component = this.rootGroup.toComponent();
 
@@ -242,53 +177,6 @@ public class TextRoot {
 
         this.doJob(Mode.STRIP, builder::append);
 
-        /*int length = string.length();
-        for (int index = 0; index < length; index++) {
-            char letter = string.charAt(index);
-
-            Tag:
-            if (letter == Tag.OPEN_BRACKET && index != (length - 1)) {
-                int indexEnd = indexOfIgnoreEscaped(string, Tag.CLOSE_BRACKET, index);
-                if (indexEnd == -1) break Tag;
-
-                char next = string.charAt(index + 1);
-                if (next == Tag.CLOSE_BRACKET) break Tag;
-
-                boolean closeTag = false;
-                if (next == Tag.CLOSE_SLASH) {
-                    closeTag = true;
-                    index++;
-                }
-
-                String bracketsContent = string.substring(index + 1, indexEnd);
-                String tagName = bracketsContent;
-
-                // Check for content tags
-                int semicolonIndex = bracketsContent.indexOf(':');
-                if (semicolonIndex >= 0) {
-                    tagName = bracketsContent.substring(0, semicolonIndex);
-                }
-                else if (tagName.startsWith(ShortHexColorTag.NAME)) {
-                    tagName = ShortHexColorTag.NAME;
-                }
-
-                Tag tag = Tags.getTag(tagName);
-                if (tag != null) {
-                    if (!tagPool.isGoodTag(tag)) {
-                        index = indexEnd;
-                        continue;
-                    }
-                }
-
-                // Move cursor back to '/' of invalid closing tag.
-                if (closeTag) {
-                    index--;
-                }
-            }
-
-            builder.append(letter);
-        }*/
-
         return builder.toString();
     }
 
@@ -298,16 +186,16 @@ public class TextRoot {
             char letter = string.charAt(index);
 
             Tag:
-            if (letter == Tag.OPEN_BRACKET && index != (length - 1)) {
-                int indexEnd = indexOfIgnoreEscaped(string, Tag.CLOSE_BRACKET, index);//string.indexOf(Tag.CLOSE_BRACKET, index);
+            if (letter == TagUtils.OPEN_BRACKET && index != (length - 1)) {
+                int indexEnd = indexOfIgnoreEscaped(string, TagUtils.CLOSE_BRACKET, index);//string.indexOf(Tag.CLOSE_BRACKET, index);
                 //System.out.println("indexEnd = " + indexEnd);
                 if (indexEnd == -1) break Tag;
 
                 char next = string.charAt(index + 1);
-                if (next == Tag.CLOSE_BRACKET) break Tag;
+                if (next == TagUtils.CLOSE_BRACKET) break Tag;
 
                 boolean closeTag = false;
-                if (next == Tag.CLOSE_SLASH) {
+                if (next == TagUtils.CLOSE_SLASH) {
                     closeTag = true;
                     index++;
                 }
@@ -319,7 +207,7 @@ public class TextRoot {
                 String tagContent = null;
 
                 // Check for content tags
-                int semicolonIndex = bracketsContent.indexOf(':');
+                int semicolonIndex = bracketsContent.indexOf(TagUtils.SEMICOLON);
                 if (semicolonIndex >= 0) {
                     tagName = bracketsContent.substring(0, semicolonIndex);
                     tagContent = bracketsContent.substring(semicolonIndex + 1);
@@ -361,21 +249,28 @@ public class TextRoot {
     }
 
     private void proceedTag(@NotNull Tag tag, boolean closeTag, @Nullable String tagContent) {
+        if (closeTag && !tag.isCloseable()) return;
+
         if (tag instanceof PlaceholderTag placeholderTag) {
-            if (!closeTag) {
+            //if (!closeTag) {
                 this.currentNode().append(placeholderTag.getValue()); // Insert it to the current node as if it was a regular text.
-            }
+            //}
             return;
         }
-        if (tag instanceof TranslationTag translationTag) {
+        if (tag instanceof TranslationTag) {
             if (tagContent != null) {
-                this.currentGroup.createNode().setTranslation(stripQuotesSlash(tagContent)); // Create a new node specially for translation text.
+                // Create a new node exclusively for translation text.
+                TextNode node = this.currentGroup.createNode();
+                node.append(TagUtils.unquoted(tagContent));
+                node.setTranslation(true);
+                //this.currentGroup.createNode().setTranslation(TagUtils.unquoted(tagContent));
                 this.currentNode = null; // Reset current node so parser will create a new one after this one with translation.
             }
             return;
         }
 
-        this.currentNode = null; // Reset current node because of current group change below.
+        // Reset current node to create a new one inside for a group jumped/created below.
+        this.currentNode = null;
 
         if (closeTag) {
             this.toParentGroup(tag.getName()); // Jump to the first parent group of closed tag (or root group if there is no parent for this tag).
@@ -383,7 +278,7 @@ public class TextRoot {
         }
 
         if (tag instanceof ResetTag) {
-            this.currentGroup = this.rootGroup; // Jump to the parent group for 'Reset' tag, so it will create new children groups without decorators on further parsing.
+            this.currentGroup = this.rootGroup; // Jump to the root group for 'Reset' tag, so it will create new children groups without decorators on further parsing.
             return;
         }
 
@@ -411,13 +306,13 @@ public class TextRoot {
         return rootGroup;
     }
 
-    public BaseComponent getComponent() {
+    public NightComponent getComponent() {
         return component;
     }
 
-    public static boolean isEmpty(@NotNull BaseComponent component) {
-        return component instanceof TextComponent textComponent && textComponent.getText().isBlank() && textComponent.getExtra() == null;
-    }
+//    public static boolean isEmpty(@NotNull BaseComponent component) {
+//        return component instanceof TextComponent textComponent && textComponent.getText().isBlank() && textComponent.getExtra() == null;
+//    }
 
     public static int indexOfIgnoreEscaped(@NotNull String string, char what, int from) {
         int length = string.length();
@@ -450,17 +345,6 @@ public class TextRoot {
         }
 
         return -1;
-    }
-
-    @NotNull
-    public static String stripQuotesSlash(@NotNull String str) {
-        if (str.startsWith("\"") || str.startsWith("'")) {
-            str = str.substring(1);
-        }
-        if (str.endsWith("\"") || str.endsWith("'")) {
-            str = str.substring(0, str.length() - 1);
-        }
-        return str.replace("\\", "");
     }
 
     /*@NotNull

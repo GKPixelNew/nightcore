@@ -4,7 +4,10 @@ import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
+import org.bukkit.generator.WorldInfo;
+import org.bukkit.inventory.MenuType;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,12 +19,20 @@ import java.util.stream.StreamSupport;
 
 public class BukkitThing {
 
+    @NotNull
+    public static List<String> worldNames() {
+        return Bukkit.getServer().getWorlds().stream().map(WorldInfo::getName).toList();
+    }
+
     @Nullable
     public static <T extends Keyed> T fromRegistry(@NotNull Registry<T> registry, @NotNull String key) {
-        key = StringUtil.lowerCaseUnderscoreStrict(key);
-
-        NamespacedKey namespacedKey = NamespacedKey.minecraft(key);
-        return registry.get(namespacedKey);
+        try {
+            NamespacedKey namespacedKey = NamespacedKey.minecraft(key.toLowerCase());
+            return registry.get(namespacedKey);
+        }
+        catch (IllegalArgumentException exception) {
+            return null;
+        }
     }
 
     @NotNull
@@ -70,9 +81,6 @@ public class BukkitThing {
 
     @Nullable
     public static Enchantment getEnchantment(@NotNull String name) {
-        if (Version.isBehind(Version.V1_19_R3)) {
-            return Enchantment.getByKey(NamespacedKey.minecraft(StringUtil.lowerCaseUnderscoreStrict(name)));
-        }
         return fromRegistry(Registry.ENCHANTMENT, name);
     }
 
@@ -92,7 +100,26 @@ public class BukkitThing {
     }
 
     @Nullable
+    public static PotionType getPotionType(@NotNull String name) {
+        return fromRegistry(Registry.POTION, name);
+    }
+
+    @Nullable
     public static Sound getSound(@NotNull String name) {
+//        if (Version.isBehind(Version.MC_1_21_3)) {
+//            return Sound.valueOf(name.toUpperCase());
+//        }
         return fromRegistry(Registry.SOUNDS, name);
+    }
+
+    @Nullable
+    public static Particle getParticle(@NotNull String name) {
+        return fromRegistry(Registry.PARTICLE_TYPE, name);
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    @Nullable
+    public static MenuType getMenuType(@NotNull String name) {
+        return fromRegistry(Registry.MENU, name);
     }
 }

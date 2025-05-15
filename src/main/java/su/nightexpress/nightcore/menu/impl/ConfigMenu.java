@@ -1,31 +1,34 @@
 package su.nightexpress.nightcore.menu.impl;
 
 import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nightexpress.nightcore.NightCorePlugin;
 import su.nightexpress.nightcore.config.ConfigValue;
 import su.nightexpress.nightcore.config.FileConfig;
-import su.nightexpress.nightcore.menu.api.AutoFilled;
 import su.nightexpress.nightcore.menu.MenuOptions;
+import su.nightexpress.nightcore.menu.api.AutoFilled;
 import su.nightexpress.nightcore.menu.click.ClickAction;
 import su.nightexpress.nightcore.menu.click.ClickType;
 import su.nightexpress.nightcore.menu.item.ItemHandler;
 import su.nightexpress.nightcore.menu.item.MenuItem;
 import su.nightexpress.nightcore.util.*;
 import su.nightexpress.nightcore.util.text.NightMessage;
+import su.nightexpress.nightcore.util.bukkit.NightItem;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Deprecated
 public abstract class ConfigMenu<P extends NightCorePlugin> extends AbstractMenu<P> {
 
     protected static final String DEFAULT_ITEM_SECTION = "Content";
 
     protected final FileConfig               cfg;
     protected final Map<String, ItemHandler> handlerMap;
-    protected       String                   itemSection;
+
+    protected String  itemSection;
+    protected boolean applyPAPI;
 
     public ConfigMenu(@NotNull P plugin, @NotNull FileConfig config) {
         super(plugin);
@@ -73,6 +76,12 @@ public abstract class ConfigMenu<P extends NightCorePlugin> extends AbstractMenu
             "Sets GUI auto-refresh interval (in seconds). Set this to 0 to disable."
         ).read(cfg);
 
+        boolean applyPAPI = ConfigValue.create("Settings.PlaceholderAPI.Enabled",
+            this.applyPAPI,
+            "Sets whether " + Plugins.PLACEHOLDER_API + " placeholders will be applied on all items from the '" + this.itemSection + "' section of this GUI.",
+            "[*] Disable if you don't use any " + Plugins.PLACEHOLDER_API + " placeholders on your items to improve GUI performance."
+        ).read(cfg);
+
         this.getOptions().setTitle(NightMessage.asLegacy(title));
         this.getOptions().setSize(size);
         this.getOptions().setType(type);
@@ -84,7 +93,7 @@ public abstract class ConfigMenu<P extends NightCorePlugin> extends AbstractMenu
             this.createDefaultItems().forEach(menuItem -> {
                 AtomicInteger count = new AtomicInteger();
                 String raw = ItemUtil.getItemName(menuItem.getItemStack());
-                String name = StringUtil.lowerCaseUnderscoreStrict(NightMessage.asLegacy(raw));
+                String name = StringUtil.lowerCaseUnderscoreStrict(NightMessage.stripAll(raw));
                 String finalName = name;
 
                 while (this.cfg.contains(this.itemSection + "." + finalName)) {
@@ -98,6 +107,10 @@ public abstract class ConfigMenu<P extends NightCorePlugin> extends AbstractMenu
         this.cfg.getSection(this.itemSection).forEach(sId -> {
             MenuItem menuItem = this.readItem(this.itemSection + "." + sId);
             this.addItem(menuItem);
+
+            if (applyPAPI) {
+                menuItem.getOptions().addDisplayModifier((viewer, itemStack) -> ItemReplacer.replacePlaceholderAPI(itemStack, viewer.getPlayer()));
+            }
         });
 
         List<String> comments = new ArrayList<>();
@@ -148,7 +161,7 @@ public abstract class ConfigMenu<P extends NightCorePlugin> extends AbstractMenu
     @NotNull
     protected MenuItem readItem(@NotNull String path) {
         String handlerName = cfg.getString(path + ".Type", Placeholders.DEFAULT);
-        ItemStack item = cfg.getItem(path + ".Item");
+        NightItem item = cfg.getCosmeticItem(path + ".Item");
         int[] slots = cfg.getIntArray(path + ".Slots");
         int priority = cfg.getInt(path + ".Priority");
 
@@ -166,9 +179,10 @@ public abstract class ConfigMenu<P extends NightCorePlugin> extends AbstractMenu
                 if (clickType == null) continue;
 
                 List<String> commands = cfg.getStringList(path + ".Click_Commands." + sType);
+                if (commands.isEmpty()) continue;
+
                 commandMap.put(clickType, commands);
             }
-            commandMap.values().removeIf(List::isEmpty);
 
             ClickAction clickCommands = (viewer, event) -> {
                 List<String> commands = commandMap.getOrDefault(ClickType.from(event), Collections.emptyList());

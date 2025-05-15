@@ -9,10 +9,11 @@ import su.nightexpress.nightcore.menu.MenuViewer;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
+@Deprecated
 public class ItemOptions {
 
-    private Predicate<MenuViewer> visibilityPolicy;
-    private Predicate<MenuViewer> weakPolicy;
+    private Predicate<MenuViewer>             visibilityPolicy;
+    private Predicate<MenuViewer>             weakPolicy;
     private BiConsumer<MenuViewer, ItemStack> displayModifier;
 
     public ItemOptions() {

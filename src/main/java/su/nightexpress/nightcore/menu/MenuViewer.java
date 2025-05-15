@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nightexpress.nightcore.util.Version;
 
+@Deprecated
 public class MenuViewer {
 
     private final Player player;
@@ -16,6 +17,7 @@ public class MenuViewer {
     private int           page;
     private int           pages;
     private long          lastClickTime;
+    private boolean       updateTitle;
 
     public MenuViewer(@NotNull Player player) {
         this.player = player;
@@ -30,9 +32,9 @@ public class MenuViewer {
 
     public void flushInventory(@NotNull MenuOptions options) {
         this.inventory.clear();
-
-        if (Version.isAtLeast(Version.V1_19_R3)) {
+        if (this.isUpdateTitle() && Version.isAtLeast(Version.MC_1_21_3)) {
             this.view.setTitle(options.getTitleFormatted());
+            this.setUpdateTitle(false);
         }
     }
 
@@ -46,7 +48,7 @@ public class MenuViewer {
 
     @NotNull
     public Player getPlayer() {
-        return player;
+        return this.player;
     }
 
     @Nullable
@@ -81,5 +83,13 @@ public class MenuViewer {
 
     public void setLastClickTime(long lastClickTime) {
         this.lastClickTime = lastClickTime;
+    }
+
+    public boolean isUpdateTitle() {
+        return updateTitle;
+    }
+
+    public void setUpdateTitle(boolean updateTitle) {
+        this.updateTitle = updateTitle;
     }
 }

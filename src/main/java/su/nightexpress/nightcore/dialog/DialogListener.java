@@ -13,6 +13,7 @@ import su.nightexpress.nightcore.util.NumberUtil;
 
 import java.util.HashSet;
 
+@Deprecated
 public class DialogListener extends AbstractListener<NightCore> {
 
     public DialogListener(@NotNull NightCore plugin) {
@@ -54,7 +55,7 @@ public class DialogListener extends AbstractListener<NightCore> {
         String text = raw.substring(1);
         if (text.startsWith(Dialog.VALUES)) {
             String[] split = text.split(" ");
-            int page = split.length >= 2 ? NumberUtil.getInteger(split[1], 0) : 0;
+            int page = split.length >= 2 ? NumberUtil.getIntegerAbs(split[1]) : 0;
             boolean auto = split.length >= 3 && Boolean.parseBoolean(split[2]);
             dialog.displaySuggestions(auto, page);
             return;

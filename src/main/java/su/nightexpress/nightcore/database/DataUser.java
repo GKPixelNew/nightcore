@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
+@Deprecated
 public interface DataUser {
 
     void onLoad();
@@ -31,7 +32,7 @@ public interface DataUser {
 
     void setCachedUntil(long cachedUntil);
 
-    void setAutoSaveIn(int seconds);
+    void setAutoSaveIn(double seconds);
 
     void setNextSyncIn(int seconds);
 
