@@ -42,12 +42,6 @@ public class Tags {
     public static final FontStyleTag UNSTRIKETHROUGH = STRIKETHROUGH.inverted();
     public static final FontStyleTag UNUNDERLINED    = UNDERLINED.inverted();
 
-    public static final FontStyleTag BOLD_FULL          = new FontStyleTag("bold", FontStyleTag.Style.BOLD);
-    public static final FontStyleTag ITALIC_FULL        = new FontStyleTag("italic", FontStyleTag.Style.ITALIC);
-    public static final FontStyleTag OBFUSCATED_FULL    = new FontStyleTag("obfuscated", FontStyleTag.Style.OBFUSCATED);
-    public static final FontStyleTag STRIKETHROUGH_FULL = new FontStyleTag("strikethrough", FontStyleTag.Style.STRIKETHROUGH);
-    public static final FontStyleTag UNDERLINED_FULL    = new FontStyleTag("underlined", FontStyleTag.Style.UNDERLINED);
-
     public static final ColorTag BLACK  = new ColorTag("black", "#000000");
     public static final ColorTag WHITE  = new ColorTag("white", "#ffffff");
     public static final ColorTag GRAY   = new ColorTag("gray", "#aaa8a8");
@@ -94,8 +88,6 @@ public class Tags {
             Tags.BOLD, Tags.ITALIC, Tags.OBFUSCATED, Tags.STRIKETHROUGH, Tags.UNDERLINED,
             Tags.UNBOLD, Tags.UNITALIC, Tags.UNOBFUSCATED, Tags.UNSTRIKETHROUGH, Tags.UNUNDERLINED
         );
-        registerTags(Tags.BOLD_FULL, Tags.ITALIC_FULL, Tags.OBFUSCATED_FULL, Tags.STRIKETHROUGH_FULL, Tags.UNDERLINED_FULL);
-
         registerTags(Tags.GRADIENT, Tags.LINE_BREAK, Tags.FONT, Tags.HOVER, Tags.CLICK,
             Tags.RESET, Tags.HEX_COLOR, Tags.HEX_COLOR_SHORT, Tags.TRANSLATE);
 
